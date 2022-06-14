@@ -8,7 +8,7 @@ import com.example.ecommerceadmin.models.DashboardItem
 import com.example.ecommerceadmin.models.DashboardItemType
 import com.example.ecommerceadmin.models.dashboardItemList
 
-class DashboardItemAdapter() : RecyclerView.Adapter<DashboardItemAdapter.DashboardViewHolder>(){
+class DashboardItemAdapter(val callback: (DashboardItemType) -> Unit) : RecyclerView.Adapter<DashboardItemAdapter.DashboardViewHolder>(){
 
     class DashboardViewHolder(val binding: DashboardItemBinding)
         : RecyclerView.ViewHolder(binding.root) {
@@ -26,6 +26,9 @@ class DashboardItemAdapter() : RecyclerView.Adapter<DashboardItemAdapter.Dashboa
 
     override fun onBindViewHolder(holder: DashboardViewHolder, position: Int) {
         holder.bind(dashboardItemList.get(position))
+        holder.itemView.setOnClickListener {
+            callback(dashboardItemList.get(position).type)
+        }
 
     }
 
