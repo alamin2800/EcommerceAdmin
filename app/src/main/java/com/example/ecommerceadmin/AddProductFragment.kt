@@ -1,59 +1,142 @@
 package com.example.ecommerceadmin
 
+import android.R
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.activityViewModels
+import com.example.ecomadmin.customdialogs.DatePickerFragment
+import com.example.ecommerceadmin.databinding.FragmentAddProductBinding
+import com.example.ecommerceadmin.models.Product
+import com.example.ecommerceadmin.models.Purchase
+import com.example.ecommerceadmin.utlis.getFormattedDate
+import com.example.ecommerceadmin.viewmodels.ProductViewModel
+import com.google.firebase.Timestamp
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [AddProductFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class AddProductFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private val productViewModel: ProductViewModel by activityViewModels()
+    private lateinit var binding: FragmentAddProductBinding
+    private var category: String? = null
+    private var timeStamp: Timestamp? = null
+    private var imageUrl: String? = null
+    private var bitmap: Bitmap? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_add_product, container, false)
+        binding = FragmentAddProductBinding.inflate(inflater, container, false)
+        productViewModel.getCategories().observe(viewLifecycleOwner) {
+            Log.d("spin", it.toString())
+            if (!it.isNullOrEmpty()) {
+                val adapter = ArrayAdapter<String>(
+                    requireActivity(),
+                    R.layout.simple_spinner_dropdown_item, it
+                )
+                binding.catSP.adapter = adapter
+            }
+        }
+
+        binding.catSP.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                category = parent!!.getItemAtPosition(position).toString()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("Not yet implemented")
+            }
+        }
+
+        binding.dateBtn.setOnClickListener {
+            DatePickerFragment {
+                timeStamp = it
+                binding.dateBtn.text = getFormattedDate(it.seconds * 1000, "dd/MM/yyyy")
+            }.show(childFragmentManager, null)
+        }
+
+        binding.captureBtn.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
+
+        binding.saveBtn.setOnClickListener {
+            val name = binding.nameInputET.text.toString()
+            val description = binding.descriptionInputET.text.toString()
+            val purchaseprice = binding.purchasePriceET.text.toString()
+            val salePrice = binding.salePriceET.text.toString()
+            val qty = binding.quantityET.text.toString()
+            // TODO: validate fields
+           // binding.mProgressbar.visibility = View.VISIBLE
+            productViewModel.uploadImage(bitmap!!) {downloadUrl ->
+                imageUrl = downloadUrl
+                val product = Product(
+                    name = name,
+                    description = description,
+                    salePrice = salePrice.toDouble(),
+                    category = category,
+                    imageUrl = imageUrl
+                )
+                val purchase = Purchase(
+                    purchaseDate = timeStamp,
+                    purchasePrice = purchaseprice.toDouble(),
+                    quantity = qty.toDouble()
+                )
+                productViewModel.addProduct(product, purchase)
+            }
+        }
+
+        productViewModel.statusLD.observe(viewLifecycleOwner) {
+            if (it == "Success") {
+              //  binding.mProgressbar.visibility = View.GONE
+                resetFields()
+            }else {
+              //  binding.mProgressbar.visibility = View.GONE
+                Toast.makeText(requireActivity(), "failed to save", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AddProductFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AddProductFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    private fun resetFields() {
+        binding.nameInputET.text = null
+        binding.descriptionInputET.text = null
+        binding.quantityET.text = null
+        binding.purchasePriceET.text = null
+        binding.salePriceET.text = null
     }
+    val resultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) {
+        if (it.resultCode == Activity.RESULT_OK) {
+            bitmap = it.data?.extras?.get("data") as Bitmap
+            binding.productIV.setImageBitmap(bitmap)
+        }
+    }
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        try {
+            resultLauncher.launch(takePictureIntent)
+        } catch (e: ActivityNotFoundException) {
+            // display error state to the user
+        }
+    }
+
 }
