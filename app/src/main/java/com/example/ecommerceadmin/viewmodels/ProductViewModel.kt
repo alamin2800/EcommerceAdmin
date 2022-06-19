@@ -20,6 +20,8 @@ class ProductViewModel : ViewModel() {
         }
     }
     fun getProducts() = repository.getAllProducts()
+    fun getProductByProductId(id: String) = repository.getProductByProductId(id)
+    fun getPurchasesByProductId(id: String) = repository.getPurchaseHistoryByProductId(id)
 
     fun uploadImage(bitmap: Bitmap, callback: (String) -> Unit) {
         val photoRef = FirebaseStorage.getInstance().reference

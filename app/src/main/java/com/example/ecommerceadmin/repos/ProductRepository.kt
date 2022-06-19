@@ -13,8 +13,7 @@ class ProductRepository {
     val db = FirebaseFirestore.getInstance()
 
 
-
-    fun getAllCategories() : LiveData<List<String>> {
+    fun getAllCategories(): LiveData<List<String>> {
         val catLD = MutableLiveData<List<String>>()
         db.collection(collectionCategory)
             .addSnapshotListener { value, error ->
@@ -48,7 +47,7 @@ class ProductRepository {
     }
 
 
-    fun getAllProducts() : LiveData<List<Product>> {
+    fun getAllProducts(): LiveData<List<Product>> {
         val productLD = MutableLiveData<List<Product>>()
         db.collection(collectionProduct)
             .addSnapshotListener { value, error ->
@@ -64,5 +63,33 @@ class ProductRepository {
         return productLD
     }
 
+
+    fun getProductByProductId(id: String): LiveData<Product> {
+        val productLD = MutableLiveData<Product>()
+        db.collection(collectionProduct).document(id)
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    return@addSnapshotListener
+                }
+                productLD.value = value?.toObject(Product::class.java)
+            }
+        return productLD
+    }
+    fun getPurchaseHistoryByProductId(id: String) : LiveData<List<Purchase>> {
+        val purchaseLD = MutableLiveData<List<Purchase>>()
+        db.collection(collectionPurchase)
+            .whereEqualTo("productId", id)
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    return@addSnapshotListener
+                }
+                val tempList = mutableListOf<Purchase>()
+                for (doc in value!!.documents) {
+                    doc.toObject(Purchase::class.java)?.let { tempList.add(it) }
+                }
+                purchaseLD.value = tempList
+            }
+        return purchaseLD
+    }
 
 }
