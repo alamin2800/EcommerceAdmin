@@ -19,6 +19,7 @@ class ProductViewModel : ViewModel() {
             statusLD.value = it
         }
     }
+    fun getProducts() = repository.getAllProducts()
 
     fun uploadImage(bitmap: Bitmap, callback: (String) -> Unit) {
         val photoRef = FirebaseStorage.getInstance().reference

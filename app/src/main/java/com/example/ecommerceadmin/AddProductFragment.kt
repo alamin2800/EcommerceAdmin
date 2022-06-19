@@ -84,8 +84,8 @@ class AddProductFragment : Fragment() {
             val salePrice = binding.salePriceET.text.toString()
             val qty = binding.quantityET.text.toString()
             // TODO: validate fields
-           // binding.mProgressbar.visibility = View.VISIBLE
-            productViewModel.uploadImage(bitmap!!) {downloadUrl ->
+            binding.mProgressbar.visibility = View.VISIBLE
+            productViewModel.uploadImage(bitmap!!) { downloadUrl ->
                 imageUrl = downloadUrl
                 val product = Product(
                     name = name,
@@ -105,10 +105,10 @@ class AddProductFragment : Fragment() {
 
         productViewModel.statusLD.observe(viewLifecycleOwner) {
             if (it == "Success") {
-              //  binding.mProgressbar.visibility = View.GONE
+                binding.mProgressbar.visibility = View.GONE
                 resetFields()
-            }else {
-              //  binding.mProgressbar.visibility = View.GONE
+            } else {
+                binding.mProgressbar.visibility = View.GONE
                 Toast.makeText(requireActivity(), "failed to save", Toast.LENGTH_SHORT).show()
             }
         }
@@ -123,13 +123,16 @@ class AddProductFragment : Fragment() {
         binding.purchasePriceET.text = null
         binding.salePriceET.text = null
     }
+
     val resultLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) {
+        ActivityResultContracts.StartActivityForResult()
+    ) {
         if (it.resultCode == Activity.RESULT_OK) {
             bitmap = it.data?.extras?.get("data") as Bitmap
             binding.productIV.setImageBitmap(bitmap)
         }
     }
+
     private fun dispatchTakePictureIntent() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         try {

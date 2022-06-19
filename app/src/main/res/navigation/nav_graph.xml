@@ -37,10 +37,19 @@
         android:id="@+id/viewProductFragment"
         android:name="com.example.ecommerceadmin.ViewProductFragment"
         android:label="fragment_view_product"
-        tools:layout="@layout/fragment_view_product" />
+        tools:layout="@layout/fragment_view_product" >
+        <action
+            android:id="@+id/action_viewProductFragment_to_productDetailsFragment"
+            app:destination="@id/productDetailsFragment" />
+    </fragment>
     <fragment
         android:id="@+id/categoryFragment"
         android:name="com.example.ecommerceadmin.CategoryFragment"
         android:label="fragment_category"
         tools:layout="@layout/fragment_category" />
+    <fragment
+        android:id="@+id/productDetailsFragment"
+        android:name="com.example.ecommerceadmin.ProductDetailsFragment"
+        android:label="fragment_product_details"
+        tools:layout="@layout/fragment_product_details" />
 </navigation>
